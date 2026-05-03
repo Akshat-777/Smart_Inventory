@@ -89,3 +89,11 @@ export type DashboardSummary = {
   pendingPurchaseOrders: number;
   pendingSalesOrders: number;
 };
+
+export type LowStockItem = {
+  productId: string;
+  productName: string;
+  sku: string;
+  totalQuantityAcrossWarehouses: number;
+  lowStockThreshold: number;
+};

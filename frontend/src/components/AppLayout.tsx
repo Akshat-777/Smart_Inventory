@@ -5,7 +5,8 @@ import {
   IconDashboard,
   IconLayers,
   IconPackage,
-  IconWarehouse
+  IconWarehouse,
+  IconAlertTriangle
 } from "./icons";
 
 export function AppLayout() {
@@ -31,6 +32,10 @@ export function AppLayout() {
           <NavLink to="/products" className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
             <IconPackage />
             Products
+          </NavLink>
+          <NavLink to="/low-stock" className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
+            <IconAlertTriangle />
+            Low Stock
           </NavLink>
           <NavLink to="/warehouses" className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
             <IconWarehouse />
