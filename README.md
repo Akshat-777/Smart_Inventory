@@ -81,13 +81,55 @@ VITE_API_BASE_URL=
 # VITE_API_BASE_URL=http://localhost:5188
 ```
 
-## Production hosting (no Docker)
+## Deployment (Render + Vercel)
 
-- **API:** `dotnet publish` the `InventoryManagement.Api` project and run it under IIS, raw Kestrel, or a platform App Service. Set `ASPNETCORE_ENVIRONMENT=Production`, the SQL connection string, JWT signing key, and CORS origins via environment variables or `appsettings.Production.json`.
-- **Frontend:** run `npm run build` in `frontend/` and deploy the `frontend/dist` folder as static files (IIS static site, nginx, CDN, etc.). If the UI is served from a **different origin** than the API, set `VITE_API_BASE_URL` when building to your public API URL; otherwise configure your web server to proxy `/api` to the API (similar to Vite’s dev proxy).
-- **`ReverseProxy:UseForwardedHeaders`** is enabled in `appsettings.Production.json` so `X-Forwarded-*` headers from IIS, nginx, or a load balancer are honored when TLS terminates in front of Kestrel.
+The app is deployed as two services:
 
-Production builds leave the login fields empty; local `npm run dev` still pre-fills the seeded admin credentials.
+| Component | Platform | Type |
+|-----------|----------|------|
+| **Backend** (ASP.NET Core 8 API) | [Render](https://render.com) | Docker Web Service |
+| **Frontend** (React + Vite) | [Vercel](https://vercel.com) | Static Site |
+
+### Deploy backend to Render
+
+1. Push the repo to GitHub.
+2. Go to [render.com](https://render.com) → **New** → **Blueprint**.
+3. Connect the GitHub repo — Render auto-detects the `render.yaml` at the project root.
+4. The blueprint creates the **inventory-api** web service using the `backend/Dockerfile`.
+5. Set the `Cors__Origins__0` environment variable to your Vercel frontend URL (e.g. `https://your-app.vercel.app`).
+6. Verify: `GET https://<your-service>.onrender.com/health` should return `200`.
+
+**Environment variables set by `render.yaml`:**
+
+| Variable | Purpose | Value |
+|----------|---------|-------|
+| `ConnectionStrings__DefaultConnection` | SQLite DB path | `Data Source=/data/inventory.db` |
+| `Database__UseSqlite` | Use SQLite provider | `true` |
+| `Jwt__SigningKey` | JWT signing secret | Auto-generated |
+| `Jwt__Issuer` | JWT issuer | `InventoryManagement` |
+| `Jwt__Audience` | JWT audience | `InventoryManagementClients` |
+| `Cors__Origins__0` | Allowed frontend origin | Set after Vercel deploy |
+
+> **Note:** On Render's free tier the filesystem is ephemeral — the SQLite database resets on each redeploy. For persistent data, upgrade to a paid plan with a Render Disk, or switch to a managed PostgreSQL database.
+
+### Deploy frontend to Vercel
+
+1. Go to [vercel.com](https://vercel.com) → **Add New Project**.
+2. Import the same GitHub repo.
+3. Set **Root Directory** to `frontend`.
+4. Add environment variable: `VITE_API_BASE_URL` = `https://<your-service>.onrender.com` (your Render backend URL).
+5. Vercel auto-detects Vite and deploys. The `vercel.json` handles SPA rewrites.
+6. Copy the Vercel URL and set it as `Cors__Origins__0` in the Render dashboard.
+
+### Post-deploy checklist
+
+- [ ] Backend `/health` returns `200`
+- [ ] Frontend loads the login page
+- [ ] Login with `admin@inventory.local` / `Admin123!` works
+- [ ] CORS allows requests from the Vercel domain to the Render API
+- [ ] Full CRUD operations work end-to-end
+
+> **`ReverseProxy:UseForwardedHeaders`** is enabled in `appsettings.Production.json` so `X-Forwarded-*` headers from Render's load balancer are honored.
 
 ## Role capabilities
 
@@ -240,13 +282,19 @@ Content-Type: application/json
 
 ```
 backend/
+  Dockerfile              # Multi-stage Docker build for Render
+  .dockerignore
   InventoryManagement.sln
   InventoryManagement.Api/
   InventoryManagement.Application/
   InventoryManagement.Domain/
   InventoryManagement.Infrastructure/
 frontend/
-  src/   # React app (pages, api client, auth)
+  src/                    # React app (pages, api client, auth)
+  vercel.json             # Vercel SPA config
+  .env.development        # Local dev settings
+  .env.production         # Production API URL
+render.yaml               # Render Blueprint (auto-creates services)
 README.md
 ```
 
