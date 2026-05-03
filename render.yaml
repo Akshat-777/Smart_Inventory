@@ -22,3 +22,7 @@ services:
         value: "120"
       - key: Cors__Origins__0
         sync: false   # Set this to your Vercel URL after frontend deploy
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 1
