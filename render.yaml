@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: inventory-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    region: oregon
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: ConnectionStrings__DefaultConnection
+        value: "Data Source=/data/inventory.db"
+      - key: Database__UseSqlite
+        value: "true"
+      - key: Jwt__SigningKey
+        generateValue: true
+      - key: Jwt__Issuer
+        value: InventoryManagement
+      - key: Jwt__Audience
+        value: InventoryManagementClients
+      - key: Jwt__ExpiryMinutes
+        value: "120"
+      - key: Cors__Origins__0
+        sync: false   # Set this to your Vercel URL after frontend deploy

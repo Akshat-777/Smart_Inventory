@@ -1,0 +1,10 @@
+**/inventory-dev.db
+**/bin/
+**/obj/
+.vs/
+.idea/
+*.user
+.env
+frontend/node_modules/
+frontend/dist/
+.env.production.local
