@@ -17,6 +17,7 @@ export type AuthState = {
 
 type AuthContextValue = AuthState & {
   login: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string) => Promise<void>;
   logout: () => void;
   refreshIdentityFromStorage: () => void;
   canEdit: boolean;
@@ -75,6 +76,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setRoles(data.roles?.length ? data.roles : parseJwtRoles(data.token));
   }, []);
 
+  const register = useCallback(async (userEmail: string, password: string) => {
+    const { data } = await api.post<{
+      token: string;
+      email: string;
+      roles: string[];
+    }>("/api/auth/register", { email: userEmail, password, role: "Viewer" });
+    setStoredToken(data.token);
+    setToken(data.token);
+    setEmail(data.email);
+    setRoles(data.roles?.length ? data.roles : parseJwtRoles(data.token));
+  }, []);
+
   const logout = useCallback(() => {
     setStoredToken(null);
     setToken(null);
@@ -91,11 +104,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       roles,
       loading: false,
       login,
+      register,
       logout,
       refreshIdentityFromStorage,
       canEdit
     }),
-    [token, email, roles, login, logout, refreshIdentityFromStorage, canEdit]
+    [token, email, roles, login, register, logout, refreshIdentityFromStorage, canEdit]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -25,7 +25,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
-    [Authorize(Policy = "AdminOnly")]
+    [AllowAnonymous]
     public async Task<ActionResult<LoginResponseDto>> Register([FromBody] RegisterRequestDto request, CancellationToken cancellationToken)
     {
         var result = await _auth.RegisterAsync(request, cancellationToken);

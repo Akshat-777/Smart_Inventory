@@ -4,7 +4,8 @@ import { getErrorMessage } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 
 export function LoginPage() {
-  const { token, login } = useAuth();
+  const { token, login, register } = useAuth();
+  const [isRegistering, setIsRegistering] = useState(false);
   const [email, setEmail] = useState(
     import.meta.env.PROD ? "" : "admin@inventory.local"
   );
@@ -19,7 +20,11 @@ export function LoginPage() {
     setLoading(true);
     setError(null);
     try {
-      await login(email, password);
+      if (isRegistering) {
+        await register(email, password);
+      } else {
+        await login(email, password);
+      }
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -38,8 +43,12 @@ export function LoginPage() {
       </div>
       <div className="login-panel">
         <form className="card login-card" onSubmit={onSubmit}>
-          <h1>Welcome back</h1>
-          <p className="muted">Sign in to your inventory workspace.</p>
+          <h1>{isRegistering ? "Create an account" : "Welcome back"}</h1>
+          <p className="muted">
+            {isRegistering 
+              ? "Sign up for a new inventory workspace." 
+              : "Sign in to your inventory workspace."}
+          </p>
           <label className="field">
             <span>Email</span>
             <input
@@ -62,8 +71,20 @@ export function LoginPage() {
           </label>
           {error ? <div className="alert error">{error}</div> : null}
           <button className="btn primary" type="submit" disabled={loading}>
-            {loading ? "Signing in…" : "Sign in"}
+            {loading ? (isRegistering ? "Creating account…" : "Signing in…") : (isRegistering ? "Sign up" : "Sign in")}
           </button>
+          <div style={{ marginTop: "1rem", textAlign: "center" }}>
+            <button
+              type="button"
+              className="btn link"
+              onClick={() => {
+                setIsRegistering(!isRegistering);
+                setError(null);
+              }}
+            >
+              {isRegistering ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
+            </button>
+          </div>
         </form>
       </div>
     </div>
