@@ -110,7 +110,7 @@ The app is deployed as two services:
 | `Jwt__Audience` | JWT audience | `InventoryManagementClients` |
 | `Cors__Origins__0` | Allowed frontend origin | Set after Vercel deploy |
 
-> **Note:** On Render's free tier the filesystem is ephemeral — the SQLite database resets on each redeploy. For persistent data, upgrade to a paid plan with a Render Disk, or switch to a managed PostgreSQL database.
+> **Note:** A persistent `disk` is configured in `render.yaml` to prevent the SQLite database from resetting on each redeploy. Persistent disks require a paid Render plan. If you are on the free tier, you may need to remove the `disk` section from `render.yaml` or upgrade your plan.
 
 ### Deploy frontend to Vercel
 
@@ -135,9 +135,9 @@ The app is deployed as two services:
 
 | Role | Typical access |
 |------|------------------|
-| **Viewer** | Read products, warehouses, inventory, orders (GET); dashboard |
+| **Viewer** | Read products, warehouses, inventory, orders (GET); dashboard and Low Stock alerts |
 | **Manager** | Viewer + create/update/delete catalog, orders, manual stock adjustments |
-| **Admin** | Manager + register users (`POST /api/auth/register`) |
+| **Admin** | Manager + register users with elevated roles (standard registration defaults to Viewer) |
 
 ## Sample API requests
 
@@ -260,17 +260,16 @@ GET /api/dashboard/summary
 Authorization: Bearer <token>
 ```
 
-### Register user (Admin only)
+### Register user (Open)
 
 ```http
 POST /api/auth/register
-Authorization: Bearer <token>
 Content-Type: application/json
 
 {
-  "email": "manager@company.com",
+  "email": "newuser@company.com",
   "password": "SecurePass123!",
-  "role": "Manager"
+  "role": "Viewer"
 }
 ```
 
